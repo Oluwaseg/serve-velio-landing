@@ -124,6 +124,15 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body), system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading), system-ui, sans-serif;
   }
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']),
