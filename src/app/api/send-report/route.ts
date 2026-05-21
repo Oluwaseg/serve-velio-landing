@@ -110,7 +110,7 @@ export async function POST(request: Request) {
   const payload = {
     email: String(body.email || '').trim(),
     leads_per_month: Number(body.leadsPerMonth) || 0,
-    conversion_rate: Number(body.conversionRate) || 0.1,
+    conversion_rate: Number(body.conversionRate) || 0.3,
     deal_value: Number(body.dealValue) || 0,
     response_delay: String(body.responseDelay || ''),
     consent: Boolean(body.consent),

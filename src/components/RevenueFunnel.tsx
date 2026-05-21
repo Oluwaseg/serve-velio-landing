@@ -10,10 +10,12 @@ import { z } from 'zod';
 const calculatorSchema = z.object({
   leadsPerMonth: z.preprocess((value) => Number(value), z.number().min(1)),
   dealValue: z.preprocess((value) => Number(value), z.number().min(1)),
-  conversionRate: z.preprocess(
-    (value) => Number(value) || 0.1,
-    z.number().min(0).max(1)
-  ),
+  conversionRate: z.preprocess((value) => {
+    if (value === '' || value === null || value === undefined) {
+      return 0.3;
+    }
+    return Number(value);
+  }, z.number().min(0).max(1)),
   responseDelay: z.string().min(1),
 });
 
@@ -69,7 +71,7 @@ export default function RevenueFunnel() {
     defaultValues: {
       leadsPerMonth: '' as any,
       dealValue: '' as any,
-      conversionRate: 0.1 as any,
+      conversionRate: '' as any,
       responseDelay: '',
     },
   });
@@ -328,7 +330,7 @@ export default function RevenueFunnel() {
                         min='0'
                         max='1'
                         {...calculator.register('conversionRate')}
-                        placeholder='0.10'
+                        placeholder='0.30'
                         disabled={!canRevealConversion}
                         className='w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm'
                       />
