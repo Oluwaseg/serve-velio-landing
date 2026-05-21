@@ -152,10 +152,15 @@ export async function POST(request: Request) {
     const html = generateReportHTML(reportData);
     const pdfBuffer = await generatePDF(html);
 
+    const replyTo = process.env.MAIL_REPLY_TO || 'servevelio.agency@gmail.com';
+    const internalCopy = process.env.MAIL_INTERNAL_COPY?.trim();
+
     // Send email with PDF attachment
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'noreply@yourdomain.com',
+      from: process.env.FROM_EMAIL || 'noreply@servelhub.com',
       to: payload.email,
+      replyTo: replyTo,
+      bcc: internalCopy ? [internalCopy] : undefined,
       subject: 'Your Revenue Leak Analysis Report',
       html: `
         <p>Thank you for your interest in optimizing your revenue funnel!</p>
