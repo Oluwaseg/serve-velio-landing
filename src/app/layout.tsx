@@ -1,13 +1,12 @@
 import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
-import { Fredoka, Manrope } from 'next/font/google';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-body' });
-
-const fredoka = Fredoka({
-  variable: '--font-heading',
+const bodyFont = Inter({ subsets: ['latin'], variable: '--font-body' });
+const headingFont = Plus_Jakarta_Sans({
   subsets: ['latin'],
+  variable: '--font-heading',
 });
 
 export const metadata: Metadata = {
@@ -27,8 +26,8 @@ export default function RootLayout({
       className={cn(
         'h-full',
         'antialiased',
-        fredoka.variable,
-        manrope.variable
+        headingFont.variable,
+        bodyFont.variable
       )}
     >
       <body className='min-h-full flex flex-col bg-slate-950 text-white font-sans'>
