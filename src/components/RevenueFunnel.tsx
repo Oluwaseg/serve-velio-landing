@@ -2,9 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, ExternalLink, Sparkles } from 'lucide-react';
+import { ArrowRight, Briefcase, ExternalLink, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { FaLinkedinIn } from 'react-icons/fa6';
 import { z } from 'zod';
 
 const calculatorSchema = z.object({
@@ -21,9 +22,7 @@ const calculatorSchema = z.object({
 
 const emailSchema = z.object({
   email: z.string().email(),
-  consent: z.boolean().refine((value) => value === true, {
-    message: 'Please agree to receive the report and insights.',
-  }),
+  consent: z.boolean().optional(),
 });
 
 type CalculatorValues = z.infer<typeof calculatorSchema>;
@@ -135,7 +134,7 @@ export default function RevenueFunnel() {
         body: JSON.stringify({
           ...calcPayload,
           email: values.email,
-          consent: values.consent,
+          consent: !!values.consent,
         }),
       });
 
@@ -145,7 +144,9 @@ export default function RevenueFunnel() {
           result?.error ?? 'There was an issue saving your report.'
         );
       } else {
-        setApiMessage(result?.message ?? 'Report queued for your team.');
+        setApiMessage(
+          result?.message ?? 'Report sent successfully to your email.'
+        );
       }
     } catch (error) {
       setApiMessage('Could not connect to the reporting API.');
@@ -156,14 +157,68 @@ export default function RevenueFunnel() {
     }
   };
 
+  const handleStartOver = () => {
+    setStep('hero');
+    calculator.reset();
+    emailForm.reset();
+    setCalcPayload(null);
+    setApiMessage(null); // Reset API message
+  };
+
   return (
     <main className='relative isolate bg-gradient-to-b from-background via-slate-900/20 to-background text-foreground'>
+      {/* NAVBAR */}
+      <nav className='fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-md'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='flex justify-between items-center h-16'>
+            {/* Logo and Brand Name */}
+            <div
+              className='flex items-center gap-2 cursor-pointer'
+              onClick={() => setStep('hero')}
+            >
+              <div className='w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/20'>
+                <Sparkles className='w-5 h-5 text-white' />
+              </div>
+              <span className='text-xl font-bold tracking-tighter bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent'>
+                SERVEVELIO
+              </span>
+            </div>
+
+            {/* Navigation Links */}
+            <div className='flex items-center gap-4 sm:gap-6'>
+              <a
+                href='/portfolio'
+                className='flex items-center gap-1.5 text-sm font-medium text-slate-300 hover:text-purple-300 transition-colors'
+              >
+                <Briefcase className='w-4 h-4' />
+                <span className='hidden sm:inline'>Portfolio</span>
+              </a>
+              <a
+                href='https://www.linkedin.com/in/elias-a-91085218b'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='flex items-center gap-1.5 text-sm font-medium text-slate-300 hover:text-purple-300 transition-colors'
+              >
+                <FaLinkedinIn className='w-4 h-4' />
+                <span className='hidden sm:inline'>LinkedIn</span>
+              </a>
+              <button
+                onClick={() => setStep('calculator')}
+                className='hidden sm:block px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm font-semibold hover:bg-purple-500/20 transition-all'
+              >
+                Get Audit
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       <AnimatePresence mode='wait'>
         {/* HERO SECTION */}
         {step === 'hero' && (
           <motion.section
             key='hero'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-hidden'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -244,7 +299,7 @@ export default function RevenueFunnel() {
         {step === 'calculator' && (
           <motion.section
             key='calculator'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-y-auto'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-y-auto'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -351,94 +406,77 @@ export default function RevenueFunnel() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
-                  className='flex flex-col justify-between'
+                  className='relative flex flex-col justify-center'
                 >
-                  <div className='rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8 space-y-6 flex-1'>
-                    <motion.div
-                      key={`leads-${leadsPerMonthValue}`}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className='space-y-2'
-                    >
-                      <p className='text-xs text-slate-400 font-semibold uppercase tracking-wider'>
-                        Monthly Leads
+                  <div className='rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8 space-y-6'>
+                    <div className='space-y-2'>
+                      <h3 className='text-xl sm:text-2xl font-bold text-white'>
+                        Live Potential Revenue
+                      </h3>
+                      <p className='text-sm text-slate-400'>
+                        Based on your inputs above
                       </p>
-                      <p className='text-4xl sm:text-5xl font-bold text-white'>
-                        {leadsPerMonthValue || '—'}
+                    </div>
+
+                    <div className='space-y-1'>
+                      <p className='text-4xl sm:text-5xl font-bold text-purple-400'>
+                        {formatNumber(
+                          leadsPerMonthValue *
+                            dealValueNumber *
+                            conversionRateValue
+                        )}
                       </p>
-                    </motion.div>
+                      <p className='text-xs sm:text-sm text-slate-500'>
+                        Estimated monthly revenue at 100% efficiency
+                      </p>
+                    </div>
 
-                    {canRevealDeal && (
-                      <motion.div
-                        key={`deal-${dealValueNumber}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className='space-y-2'
-                      >
-                        <p className='text-xs text-slate-400 font-semibold uppercase tracking-wider'>
-                          Deal Value
-                        </p>
-                        <p className='text-4xl sm:text-5xl font-bold text-purple-300'>
-                          {dealValueNumber
-                            ? formatNumber(dealValueNumber)
-                            : '—'}
-                        </p>
-                      </motion.div>
-                    )}
-
-                    {canRevealResponse && (
-                      <motion.div
-                        key={`response-${responseDelayValue}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className='space-y-2'
-                      >
-                        <p className='text-xs text-slate-400 font-semibold uppercase tracking-wider'>
-                          Response Time
-                        </p>
-                        <p className='text-4xl sm:text-5xl font-bold text-pink-300'>
-                          {responseDelayValue
-                            ? responseOptions.find(
-                                (opt) => opt.value === responseDelayValue
-                              )?.label
-                            : '—'}
-                        </p>
-                      </motion.div>
-                    )}
+                    <div className='pt-4 border-t border-white/10'>
+                      <p className='text-sm text-slate-300 italic'>
+                        "The faster you respond, the more you close. It's that
+                        simple."
+                      </p>
+                    </div>
                   </div>
-
-                  {canRevealResponse && (
-                    <motion.button
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={() =>
-                        calculator.handleSubmit(onCalculatorSubmit)()
-                      }
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className='w-full mt-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 sm:py-5 rounded-lg transition-all duration-300 text-base sm:text-lg shadow-lg shadow-purple-500/40'
-                    >
-                      Show Me the Numbers
-                    </motion.button>
-                  )}
                 </motion.div>
               </motion.div>
+
+              <motion.form
+                onSubmit={calculator.handleSubmit(onCalculatorSubmit)}
+                className='mt-8'
+              >
+                <motion.button
+                  type='submit'
+                  disabled={isSubmitting}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 sm:py-5 rounded-lg transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-base sm:text-lg shadow-lg shadow-purple-500/40'
+                >
+                  {isSubmitting ? 'Processing...' : 'Show Me the Numbers'}
+                </motion.button>
+
+                {apiMessage && (
+                  <p className='text-sm sm:text-base text-slate-300 text-center font-medium mt-4'>
+                    {apiMessage}
+                  </p>
+                )}
+              </motion.form>
             </div>
           </motion.section>
         )}
 
-        {/* EMAIL GATE SECTION */}
+        {/* EMAIL SECTION */}
         {step === 'email' && (
           <motion.section
             key='email'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-hidden'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
             <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-              <div className='absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl' />
+              <div className='absolute top-0 right-0 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl' />
             </div>
 
             <div className='relative z-10 w-full max-w-xl mx-auto'>
@@ -446,35 +484,30 @@ export default function RevenueFunnel() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className='space-y-6'
+                className='rounded-2xl border border-slate-700 bg-slate-800/50 backdrop-blur-xl p-6 sm:p-10 space-y-8 shadow-2xl'
               >
                 <div className='text-center space-y-3'>
-                  <h2 className='text-4xl sm:text-5xl font-bold'>
-                    See Your Recovery Report.
+                  <h2 className='text-3xl sm:text-4xl font-bold'>
+                    Almost there!
                   </h2>
-                  <p className='text-base sm:text-lg text-slate-300'>
-                    Enter your email to view your results. We'll also send you a
-                    detailed breakdown and our "Systems Architect" tips on plugging
-                    lead leaks for good.
+                  <p className='text-slate-400 text-sm sm:text-base'>
+                    Where should we send your detailed revenue leak diagnosis?
                   </p>
                 </div>
 
-                <motion.form
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 }}
+                <form
                   onSubmit={emailForm.handleSubmit(onEmailSubmit)}
-                  className='space-y-5 rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8'
+                  className='space-y-6'
                 >
                   <div className='space-y-2'>
                     <label className='block text-sm font-semibold text-slate-200'>
-                      Enter your professional email
+                      Business Email
                     </label>
                     <input
                       type='email'
                       {...emailForm.register('email')}
-                      placeholder='your@email.com'
-                      className='w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all text-base font-medium'
+                      placeholder='you@company.com'
+                      className='w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all text-base font-medium'
                     />
                     {emailForm.formState.errors.email && (
                       <p className='text-sm text-red-400 font-medium'>
@@ -487,18 +520,13 @@ export default function RevenueFunnel() {
                     <input
                       type='checkbox'
                       {...emailForm.register('consent')}
-                      className='mt-1 w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-purple-600 focus:ring-2 focus:ring-purple-500/30 cursor-pointer'
+                      className='mt-1 w-4 h-4 rounded border-slate-700 bg-slate-900 text-purple-600 focus:ring-purple-500/30 cursor-pointer'
                     />
-                    <label className='text-sm sm:text-base text-slate-300'>
-                      Yes, send me my report and add me to the Revenue
-                      Operations newsletter for recurring tactical growth tips.
-                    </label>
-                  </div>
-                  {emailForm.formState.errors.consent && (
-                    <p className='text-sm text-red-400 font-medium'>
-                      {emailForm.formState.errors.consent.message}
+                    <p className='text-xs sm:text-sm text-slate-400 leading-tight'>
+                      I agree to receive my revenue report and occasional
+                      high-performance sales insights.
                     </p>
-                  )}
+                  </div>
 
                   <motion.button
                     type='submit'
@@ -507,15 +535,9 @@ export default function RevenueFunnel() {
                     whileTap={{ scale: 0.98 }}
                     className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 sm:py-5 rounded-lg transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed text-base sm:text-lg shadow-lg shadow-purple-500/40'
                   >
-                    {isSubmitting ? 'Processing...' : 'Show Me the Numbers'}
+                    {isSubmitting ? 'Processing...' : 'Get My Diagnosis'}
                   </motion.button>
-
-                  {apiMessage && (
-                    <p className='text-sm sm:text-base text-slate-300 text-center font-medium'>
-                      {apiMessage}
-                    </p>
-                  )}
-                </motion.form>
+                </form>
               </motion.div>
             </div>
           </motion.section>
@@ -525,7 +547,7 @@ export default function RevenueFunnel() {
         {step === 'analyzing' && (
           <motion.section
             key='analyzing'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-hidden'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -582,7 +604,7 @@ export default function RevenueFunnel() {
         {step === 'result' && (
           <motion.section
             key='result'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-y-auto'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-y-auto'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -703,7 +725,7 @@ export default function RevenueFunnel() {
         {step === 'booking' && (
           <motion.section
             key='booking'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-hidden'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -776,7 +798,7 @@ export default function RevenueFunnel() {
         {step === 'footer' && (
           <motion.section
             key='footer'
-            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden'
+            className='relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-24 overflow-hidden'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -808,22 +830,6 @@ export default function RevenueFunnel() {
                 className='flex flex-col sm:flex-row gap-4 justify-center items-center text-sm sm:text-base'
               >
                 <a
-                  href='/portfolio'
-                  className='text-purple-300 hover:text-purple-200 font-semibold transition-colors'
-                >
-                  View Full Portfolio
-                </a>
-                <span className='hidden sm:block text-slate-600'>|</span>
-                <a
-                  href='https://www.linkedin.com/in/elias-a-91085218b'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='text-purple-300 hover:text-purple-200 font-semibold transition-colors'
-                >
-                  LinkedIn Profile
-                </a>
-                <span className='hidden sm:block text-slate-600'>|</span>
-                <a
                   href='/privacy-policy'
                   className='text-purple-300 hover:text-purple-200 font-semibold transition-colors'
                 >
@@ -832,12 +838,7 @@ export default function RevenueFunnel() {
               </motion.div>
 
               <motion.button
-                onClick={() => {
-                  setStep('hero');
-                  calculator.reset();
-                  emailForm.reset();
-                  setCalcPayload(null);
-                }}
+                onClick={handleStartOver}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className='inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 sm:py-5 px-8 sm:px-10 rounded-lg transition-all duration-300 shadow-lg shadow-purple-500/40 text-base sm:text-lg'
@@ -848,7 +849,7 @@ export default function RevenueFunnel() {
 
               <div className='pt-6 border-t border-slate-700/50'>
                 <p className='text-sm text-slate-400'>
-                  © 2026 Revenue Operations. All rights reserved.
+                  © 2026 SERVEVELIO. All rights reserved.
                 </p>
               </div>
             </div>

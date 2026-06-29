@@ -1,7 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Download, FileText, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Download,
+  Eye,
+  FileText,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 // Extend window type for PDF.js
@@ -9,10 +18,6 @@ declare global {
   interface Window {
     pdfjsLib?: any;
   }
-}
-
-interface AnimatePresenceProps {
-  children: React.ReactNode;
 }
 
 export default function Portfolio() {
@@ -24,9 +29,8 @@ export default function Portfolio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pdfDocRef = useRef<any>(null);
   const renderTaskRef = useRef<any>(null);
-  const isRenderingRef = useRef(false);
 
-  // Default portfolio PDF URL - replace with your actual PDF
+  // Default portfolio PDF URL
   const portfolioUrl = '/elias-portfolio.pdf';
 
   // Load PDF.js library
@@ -57,7 +61,6 @@ export default function Portfolio() {
         const pdf = await pdfjsLib.getDocument(portfolioUrl).promise;
         pdfDocRef.current = pdf;
         setTotalPages(pdf.numPages);
-        // Let the page change effect handle rendering
         setCurrentPage(1);
       } catch (error) {
         console.error('Error loading PDF:', error);
@@ -67,32 +70,22 @@ export default function Portfolio() {
     };
 
     loadPDF();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isModalOpen]);
 
   // Render specific page
   const renderPage = async (pageNum: number, pdf?: any) => {
     const canvas = canvasRef.current;
-    if (!canvas) {
-      console.warn('Canvas not available for rendering');
-      return;
-    }
+    if (!canvas) return;
 
-    // Cancel previous render task if it's still running
     if (renderTaskRef.current) {
       try {
         renderTaskRef.current.cancel();
-      } catch (error) {
-        // Task might already be complete, ignore
-      }
+      } catch (error) {}
     }
 
     try {
       const pdfDoc = pdf || pdfDocRef.current;
-      if (!pdfDoc) {
-        console.warn('PDF document not available');
-        return;
-      }
+      if (!pdfDoc) return;
 
       const page = await pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale });
@@ -101,12 +94,8 @@ export default function Portfolio() {
       canvas.height = viewport.height;
 
       const context = canvas.getContext('2d', { willReadFrequently: true });
-      if (!context) {
-        console.error('Failed to get canvas context');
-        return;
-      }
+      if (!context) return;
 
-      // Clear canvas before rendering
       context.fillStyle = 'white';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -135,25 +124,7 @@ export default function Portfolio() {
     ) {
       renderPage(currentPage);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, scale, isModalOpen, totalPages]);
-
-  // Force render when modal opens
-  useEffect(() => {
-    if (
-      isModalOpen &&
-      pdfDocRef.current &&
-      canvasRef.current &&
-      totalPages > 0
-    ) {
-      const timer = setTimeout(() => {
-        renderPage(currentPage);
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalOpen]);
 
   // Handle zoom
   const handleZoom = (direction: 'in' | 'out') => {
@@ -168,7 +139,7 @@ export default function Portfolio() {
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = portfolioUrl;
-    link.download = 'elias-portfolio.pdf';
+    link.download = 'SERVEVELIO-Portfolio.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -178,7 +149,6 @@ export default function Portfolio() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (!isModalOpen) return;
-
       if (e.key === 'ArrowRight' && currentPage < totalPages) {
         setCurrentPage((prev) => prev + 1);
       } else if (e.key === 'ArrowLeft' && currentPage > 1) {
@@ -190,146 +160,102 @@ export default function Portfolio() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalOpen, currentPage, totalPages, setCurrentPage, setIsModalOpen]);
+  }, [isModalOpen, currentPage, totalPages]);
 
   return (
-    <main className='relative isolate bg-gradient-to-b from-background via-slate-900/20 to-background text-foreground min-h-screen'>
+    <main className='relative isolate bg-gradient-to-b from-background via-slate-900/20 to-background text-foreground min-h-screen flex flex-col'>
       {/* Background decorations */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
-        <div className='absolute top-0 right-0 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2' />
-        <div className='absolute bottom-0 left-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2' />
+        <div className='absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2' />
+        <div className='absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2' />
       </div>
 
-      {/* Header */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className='relative z-10 px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20'
-      >
-        <div className='max-w-4xl mx-auto'>
+      {/* Navigation */}
+      <nav className='relative z-20 px-4 sm:px-6 lg:px-8 py-6'>
+        <div className='max-w-7xl mx-auto'>
+          <Link
+            href='/'
+            className='inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group'
+          >
+            <ArrowLeft className='w-5 h-5 group-hover:-translate-x-1 transition-transform' />
+            <span className='font-medium'>Back to Home</span>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <div className='flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-12'>
+        <div className='max-w-4xl w-full space-y-12 text-center'>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className='text-center space-y-6'
+            transition={{ duration: 0.6 }}
+            className='space-y-6'
           >
             <h1 className='text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight'>
               <span className='block text-white mb-2'>Our Portfolio</span>
               <span className='block bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent'>
-                Success Stories & Case Studies
+                Success & Transformations
               </span>
             </h1>
-            <p className='text-base sm:text-lg text-slate-300 max-w-2xl mx-auto'>
+            <p className='text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed'>
               Explore our comprehensive portfolio showcasing revenue recovery
-              transformations and business growth strategies.
+              transformations, high-growth strategies, and client success
+              stories.
             </p>
           </motion.div>
-        </div>
-      </motion.section>
 
-      {/* Portfolio Preview Cards */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className='relative z-10 px-4 sm:px-6 lg:px-8 py-12 sm:py-16'
-      >
-        <div className='max-w-6xl mx-auto'>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {/* Portfolio Card 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className='rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8 space-y-4 hover:border-purple-500/60 transition-all duration-300'
-            >
-              <div className='flex items-center gap-3'>
-                <div className='p-3 rounded-lg bg-purple-500/20'>
-                  <FileText className='w-6 h-6 text-purple-300' />
+          {/* Consolidated Action Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className='relative group max-w-2xl mx-auto'
+          >
+            <div className='absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200'></div>
+            <div className='relative rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-xl p-8 sm:p-12 space-y-8 overflow-hidden'>
+              <div className='flex justify-center'>
+                <div className='p-5 rounded-2xl bg-purple-500/10 border border-purple-500/20'>
+                  <FileText className='w-12 h-12 text-purple-400' />
                 </div>
-                <h3 className='text-lg sm:text-xl font-bold text-white'>
-                  Full Portfolio
-                </h3>
               </div>
-              <p className='text-slate-300 text-sm sm:text-base leading-relaxed'>
-                View our complete collection of case studies, client success
-                stories, and revenue recovery transformations.
-              </p>
-              <motion.button
-                onClick={() => setIsModalOpen(true)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-3 rounded-lg transition-all duration-300 text-sm sm:text-base'
-              >
-                View PDF Portfolio
-              </motion.button>
-            </motion.div>
 
-            {/* Portfolio Card 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className='rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8 space-y-4 hover:border-purple-500/60 transition-all duration-300'
-            >
-              <div className='flex items-center gap-3'>
-                <div className='p-3 rounded-lg bg-blue-500/20'>
-                  <Download className='w-6 h-6 text-blue-300' />
-                </div>
-                <h3 className='text-lg sm:text-xl font-bold text-white'>
+              <div className='space-y-4'>
+                <h3 className='text-2xl sm:text-3xl font-bold text-white'>
+                  Full Portfolio Experience
+                </h3>
+                <p className='text-slate-400 text-base sm:text-lg'>
+                  View our complete collection of case studies or download a
+                  copy for your team.
+                </p>
+              </div>
+
+              <div className='flex flex-col sm:flex-row gap-4 justify-center pt-4'>
+                <motion.button
+                  onClick={() => setIsModalOpen(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className='flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/20'
+                >
+                  <Eye className='w-5 h-5' />
+                  View Portfolio
+                </motion.button>
+                <motion.button
+                  onClick={handleDownload}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className='flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 border border-white/10'
+                >
+                  <Download className='w-5 h-5' />
                   Download PDF
-                </h3>
+                </motion.button>
               </div>
-              <p className='text-slate-300 text-sm sm:text-base leading-relaxed'>
-                Download our portfolio as a PDF document for offline viewing and
-                easy sharing with your team.
-              </p>
-              <motion.button
-                onClick={handleDownload}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-3 rounded-lg transition-all duration-300 text-sm sm:text-base flex items-center justify-center gap-2'
-              >
-                <Download className='w-4 h-4' />
-                Download Now
-              </motion.button>
-            </motion.div>
-
-            {/* Portfolio Card 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-              className='rounded-2xl border border-purple-500/40 bg-gradient-to-br from-purple-900/20 to-blue-900/20 backdrop-blur-sm p-6 sm:p-8 space-y-4 hover:border-purple-500/60 transition-all duration-300'
-            >
-              <div className='flex items-center gap-3'>
-                <div className='p-3 rounded-lg bg-pink-500/20'>
-                  <FileText className='w-6 h-6 text-pink-300' />
-                </div>
-                <h3 className='text-lg sm:text-xl font-bold text-white'>
-                  Quick Preview
-                </h3>
-              </div>
-              <p className='text-slate-300 text-sm sm:text-base leading-relaxed'>
-                Get a quick preview of our portfolio highlights and key metrics
-                before diving into the full document.
-              </p>
-              <motion.button
-                onClick={() => setIsModalOpen(true)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className='w-full bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 text-white font-bold py-3 rounded-lg transition-all duration-300 text-sm sm:text-base'
-              >
-                Quick View
-              </motion.button>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
-      </motion.section>
+      </div>
 
-      {/* PDF Viewer Modal */}
+      {/* RESTORED PDF Viewer Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -470,9 +396,4 @@ export default function Portfolio() {
       </AnimatePresence>
     </main>
   );
-}
-
-// Helper component for AnimatePresence
-function AnimatePresence({ children }: AnimatePresenceProps) {
-  return <>{children}</>;
 }
